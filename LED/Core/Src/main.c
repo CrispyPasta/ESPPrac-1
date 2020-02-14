@@ -52,7 +52,8 @@ static void MX_USART1_UART_Init(void);
 
 void initDisplay();
 void drawAxes();
-void drawGraph(int * bins);
+void drawGraph(int *bins);
+void updateGraph(float *bins, int numbins);
 static const float maxVoltage = 1.0;
 static const int maxFreq = 20000;
 static const int minFreq = 10;
@@ -82,97 +83,151 @@ int main(void)
     MX_TIM1_Init();
     //  MX_USART1_UART_Init();
 
-    initDisplay();
-    drawAxes();
 
-    while (1);
+    int numBins = 64;
+    float data[numBins];
+
+    while (1){
+        for (int a = 1; a < numBins + 1; a++)
+        {
+            data[a - 1] = a * (1.0 / numBins);
+        }
+        updateGraph(data, numBins);
+
+        for (int a = 1; a < numBins + 1; a++)
+        {
+            data[a - 1] = 1.0 - a * (1.0 / numBins);
+        }
+        updateGraph(data, numBins);
+    }
 }
 
 /**
  * @brief Initialises, turns on and clears the display. It also sets the foreground layer to transparent and the 
  * background layer to white.
  */
-void initDisplay(){
+void initDisplay()
+{
     BSP_LCD_Init();
     BSP_LCD_DisplayOn();
 
-    BSP_LCD_LayerDefaultInit(LCD_BACKGROUND_LAYER, LCD_FRAME_BUFFER);   //intialize the layers using the buffer
+    BSP_LCD_LayerDefaultInit(LCD_BACKGROUND_LAYER, LCD_FRAME_BUFFER); //intialize the layers using the buffer
     BSP_LCD_LayerDefaultInit(LCD_FOREGROUND_LAYER, LCD_FRAME_BUFFER);
-    BSP_LCD_SelectLayer(LCD_FOREGROUND_LAYER);  
-    BSP_LCD_Clear(LCD_COLOR_TRANSPARENT);       //make the front layer transparent
+    BSP_LCD_SelectLayer(LCD_FOREGROUND_LAYER);
+    BSP_LCD_Clear(LCD_COLOR_WHITE); //make the front layer transparent
     BSP_LCD_SelectLayer(LCD_BACKGROUND_LAYER);
-    BSP_LCD_Clear(LCD_COLOR_WHITE);             //make the back layer white
+    BSP_LCD_Clear(LCD_COLOR_WHITE); //make the back layer white
 
     BSP_LCD_SelectLayer(LCD_FOREGROUND_LAYER);
-    BSP_LCD_SetBackColor(LCD_COLOR_WHITE);      //make the background for text on the front layer white
-    BSP_LCD_SetTextColor(LCD_COLOR_BLACK);      //make the text color black
+    BSP_LCD_SetBackColor(LCD_COLOR_WHITE); //make the background for text on the front layer white
+    BSP_LCD_SetTextColor(LCD_COLOR_BLACK); //make the text color black
 
     BSP_LCD_SelectLayer(LCD_BACKGROUND_LAYER);
-    BSP_LCD_SetBackColor(LCD_COLOR_WHITE);      //make the background for text on the back layer white 
+    BSP_LCD_SetBackColor(LCD_COLOR_WHITE); //make the background for text on the back layer white
 }
 
 /**
- * @brief Draws the axes for the graph
+ * @brief Draws the axes for the graph and labels them 
  */
 void drawAxes()
-{ 
+{
+    BSP_LCD_SelectLayer(LCD_BACKGROUND_LAYER);
     int yAxisStart = 10;
     int yAxisLength = 201;
     int yAxisPos = 295;
-    BSP_LCD_DrawHLine(yAxisStart, yAxisPos, yAxisLength);       //draw the y axis
+    BSP_LCD_DrawHLine(yAxisStart, yAxisPos, yAxisLength); //draw the y axis
     int xAxisStart = 210;
-    int xAxisLength = 285;
-    int xAxisPos = 10;
-    BSP_LCD_DrawVLine(xAxisStart, xAxisPos, xAxisLength);       //draw the x axis
+    int xAxisLength = 256;
+    int xAxisPos = 39;
+    BSP_LCD_DrawVLine(xAxisStart, xAxisPos, xAxisLength); //draw the x axis
 
-    char* ylabel = "Volt (V)";
-    char* xlabel[11] = {"F", "r", "e", "q", " ", "i", "n", " ", "k", "H", "z"};
+    char *ylabel = "Volt (V)";
+    char *xlabel[11] = {"F", "r", "e", "q", " ", "i", "n", " ", "k", "H", "z"};
     BSP_LCD_SetFont(&Font8);
-    BSP_LCD_DisplayStringAt(110, 310, ylabel, LEFT_MODE);       //Display the axis title 
+    BSP_LCD_DisplayStringAt(110, 310, ylabel, LEFT_MODE); //Display the axis title
 
-    for (int a = 0; a < 12; a++){
-      BSP_LCD_DisplayStringAt(230, 15 + a * 9, xlabel[a], LEFT_MODE);
+    for (int a = 0; a < 11; a++)
+    {
+        BSP_LCD_DisplayStringAt(230, 40 + a * 9, xlabel[a], LEFT_MODE);
     }
-    
 
-    int interval = yAxisLength / 10;  
+    int interval = yAxisLength / 10;
     float vInterval = maxVoltage / 10;
     char caption[4];
-    for (int a = 0; a < 11; a++){           //this loop makes little lines on the axis as well as the lines for the grid for the y-axis 
-        if (a != 10){
-        BSP_LCD_SetTextColor(LCD_COLOR_LIGHTGRAY);
-        BSP_LCD_DrawVLine(yAxisStart + a * interval, xAxisPos, xAxisLength - 3);
+    for (int a = 0; a < 11; a++)
+    { //this loop makes little lines on the axis as well as the lines for the grid for the y-axis
+        if (a != 10)
+        {
+            BSP_LCD_SetTextColor(LCD_COLOR_LIGHTGRAY);
+            BSP_LCD_DrawVLine(yAxisStart + a * interval, xAxisPos, xAxisLength - 3);
         }
 
         BSP_LCD_SetTextColor(LCD_COLOR_BLACK);
         BSP_LCD_DrawVLine(yAxisStart + a * interval, yAxisPos - 3, 7);
 
         gcvt(maxVoltage - vInterval * a, 2, caption);
-        if (a == 0){
-          caption[0] = '1';
-          caption[1] = '.';
-          caption[2] = '0';
-          caption[3] = '\0';
+        if (a == 0)
+        {
+            caption[0] = '1';
+            caption[1] = '.';
+            caption[2] = '0';
+            caption[3] = '\0';
         }
-        BSP_LCD_DisplayStringAt(yAxisStart + a * interval - 4, yAxisPos + 2, caption, LEFT_MODE);   //display intervals next to the axis
-        HAL_Delay(30);          //the delay makes it look cool
+        BSP_LCD_DisplayStringAt(yAxisStart + a * interval - 4, yAxisPos + 2, caption, LEFT_MODE); //display intervals next to the axis
+        // HAL_Delay(10);                                                                            //the delay makes it look cool
     }
 
     interval = xAxisLength / 15;
     float fInterval = (maxFreq - minFreq) / 15000.0;
-    for (int a = 0; a < 16; a++){           //this loop does the same as the previous loop, but for the x-axis
-        if (a != 0){
-        BSP_LCD_SetTextColor(LCD_COLOR_LIGHTGRAY);
-        BSP_LCD_DrawHLine(yAxisStart, yAxisPos - a * interval, yAxisLength - 3);
+    for (int a = 0; a < 16; a++)
+    { //this loop does the same as the previous loop, but for the x-axis
+        if (a != 0)
+        {
+            BSP_LCD_SetTextColor(LCD_COLOR_LIGHTGRAY);
+            BSP_LCD_DrawHLine(yAxisStart, yAxisPos - a * interval, yAxisLength - 3);
         }
         BSP_LCD_SetTextColor(LCD_COLOR_BLACK);
         BSP_LCD_DrawHLine(xAxisStart - 3, yAxisPos - a * interval, 7);
 
         gcvt(fInterval * a, 2, caption);
         BSP_LCD_DisplayStringAt(xAxisStart + 4, yAxisPos - a * interval - 2, caption, LEFT_MODE); //Display intervals next to the axis
-        HAL_Delay(30);
+        // HAL_Delay(10);
+    }
+    // BSP_LCD_Clear(LCD_COLOR_TRANSPARENT);
+}
+
+/**
+ * @brief Displays the data in the bins on the graph, displaying the lines in positions depending on the number of bins provided.
+ * @param bins The array containing the magnitudes of each frequency
+ * @param numbins The number of bins in the array
+ */
+void updateGraph(float *bins, int numbins)
+{
+    initDisplay();
+    drawAxes();
+    BSP_LCD_SelectLayer(LCD_FOREGROUND_LAYER);
+    BSP_LCD_SetTextColor(LCD_COLOR_RED);
+    int endPosition = 210;          //the x position of the line that reperesents the x axis
+    float linePositions[numbins];
+    int xAxisYend = 295;
+    float binWidth = 285 / numbins;   //the "width" that each bin would occupy on the spectrum, in number of pixels
+    int numMissedPixels = 285 - binWidth * numbins;
+
+    for (int a = 0; a < numbins; a++)
+    { //determine the positions of the lines that will be drawn
+        linePositions[a] = xAxisYend - a * (binWidth) - (binWidth / 2.0);
     }
 
+    int startPosition;
+    int yAxisLength = 200;
+    for (int a = 0; a < numbins; a++)
+    {
+        startPosition = endPosition - yAxisLength * bins[a];
+        BSP_LCD_DrawHLine(startPosition, linePositions[a], endPosition - startPosition);
+        BSP_LCD_DrawRect(startPosition, linePositions[a] - (binWidth / 2), endPosition - startPosition, binWidth - 2);
+        HAL_Delay(1);
+    }
+    BSP_LCD_SelectLayer(LCD_BACKGROUND_LAYER);
 }
 
 /**

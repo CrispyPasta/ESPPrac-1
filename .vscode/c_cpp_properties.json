@@ -1,0 +1,20 @@
+{
+    "configurations": [
+        {
+            "name": "Win32",
+            "includePath": [
+                "${workspaceFolder}\\LED\\Core\\Inc\\",
+                "${workspaceFolder}/LED/Drivers/STM32F4xx_HAL_Driver/Inc",
+                "${workspaceFolder}/LED/Drivers/BSP/STM32F429I-Discovery",
+                "${workspaceFolder}/LED/Drivers/CMSIS/Device/ST/STM32F4xx/Include"
+            ],
+            "defines": [
+                "_DEBUG",
+                "UNICODE",
+                "_UNICODE"
+            ],
+            "intelliSenseMode": "msvc-x64"
+        }
+    ],
+    "version": 4
+}
