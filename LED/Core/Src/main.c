@@ -50,10 +50,15 @@ static void MX_SPI5_Init(void);
 static void MX_TIM1_Init(void);
 static void MX_USART1_UART_Init(void);
 
+
 void initDisplay();
 void drawAxes();
 void drawGraph(int *bins);
 void updateGraph(float *bins, int numbins);
+void clearLayers();
+void fft(cplx buf[], int n);
+void fftRecurse(cplx buf[], cplx out[], int n, int step);
+
 static const float maxVoltage = 1.0;
 static const int maxFreq = 20000;
 static const int minFreq = 10;
@@ -82,25 +87,21 @@ int main(void)
     MX_SPI5_Init();
     MX_TIM1_Init();
     //  MX_USART1_UART_Init();
+    initDisplay();
+    float a = M_PI;
 
-
-    int numBins = 64;
+    int numBins = 128;
     float data[numBins];
 
     while (1){
-        for (int a = 1; a < numBins + 1; a++)
+        for (int a = 0; a < numBins; a++)
         {
-            data[a - 1] = a * (1.0 / numBins);
-        }
-        updateGraph(data, numBins);
-
-        for (int a = 1; a < numBins + 1; a++)
-        {
-            data[a - 1] = 1.0 - a * (1.0 / numBins);
+            data[a] = (rand() % 100) / 100.0;
         }
         updateGraph(data, numBins);
     }
 }
+
 
 /**
  * @brief Initialises, turns on and clears the display. It also sets the foreground layer to transparent and the 
@@ -113,10 +114,7 @@ void initDisplay()
 
     BSP_LCD_LayerDefaultInit(LCD_BACKGROUND_LAYER, LCD_FRAME_BUFFER); //intialize the layers using the buffer
     BSP_LCD_LayerDefaultInit(LCD_FOREGROUND_LAYER, LCD_FRAME_BUFFER);
-    BSP_LCD_SelectLayer(LCD_FOREGROUND_LAYER);
-    BSP_LCD_Clear(LCD_COLOR_WHITE); //make the front layer transparent
-    BSP_LCD_SelectLayer(LCD_BACKGROUND_LAYER);
-    BSP_LCD_Clear(LCD_COLOR_WHITE); //make the back layer white
+    clearLayers();
 
     BSP_LCD_SelectLayer(LCD_FOREGROUND_LAYER);
     BSP_LCD_SetBackColor(LCD_COLOR_WHITE); //make the background for text on the front layer white
@@ -124,6 +122,16 @@ void initDisplay()
 
     BSP_LCD_SelectLayer(LCD_BACKGROUND_LAYER);
     BSP_LCD_SetBackColor(LCD_COLOR_WHITE); //make the background for text on the back layer white
+}
+
+/**
+ * @brief Clears the layers of the display
+ */
+void clearLayers(){
+    BSP_LCD_SelectLayer(LCD_FOREGROUND_LAYER);
+    BSP_LCD_Clear(LCD_COLOR_WHITE); //make the front layer white
+    BSP_LCD_SelectLayer(LCD_BACKGROUND_LAYER);
+    BSP_LCD_Clear(LCD_COLOR_WHITE); //make the back layer white
 }
 
 /**
@@ -203,7 +211,7 @@ void drawAxes()
  */
 void updateGraph(float *bins, int numbins)
 {
-    initDisplay();
+    clearLayers();
     drawAxes();
     BSP_LCD_SelectLayer(LCD_FOREGROUND_LAYER);
     BSP_LCD_SetTextColor(LCD_COLOR_RED);
@@ -224,7 +232,7 @@ void updateGraph(float *bins, int numbins)
     {
         startPosition = endPosition - yAxisLength * bins[a];
         BSP_LCD_DrawHLine(startPosition, linePositions[a], endPosition - startPosition);
-        BSP_LCD_DrawRect(startPosition, linePositions[a] - (binWidth / 2), endPosition - startPosition, binWidth - 2);
+        // BSP_LCD_DrawRect(startPosition, linePositions[a] - (binWidth / 2), endPosition - startPosition, binWidth - 2);
         HAL_Delay(1);
     }
     BSP_LCD_SelectLayer(LCD_BACKGROUND_LAYER);

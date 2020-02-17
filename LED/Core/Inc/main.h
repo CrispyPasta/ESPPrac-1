@@ -35,14 +35,15 @@ extern "C" {
 #include "stm32f429i_discovery.h"
 #include "stm32f429i_discovery_lcd.h"
 #include <stdlib.h>
-#include <string.h>
 #include <stdio.h>
+#include <math.h>
+#include <complex.h>
 
 /* USER CODE END Includes */
 
 /* Exported types ------------------------------------------------------------*/
 /* USER CODE BEGIN ET */
-
+typedef double complex cplx;
 /* USER CODE END ET */
 
 /* Exported constants --------------------------------------------------------*/
