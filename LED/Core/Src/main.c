@@ -58,10 +58,13 @@ void updateGraph(float *bins, int numbins);
 void clearLayers();
 void fft(cplx buf[], int n);
 void fftRecurse(cplx buf[], cplx out[], int n, int step);
+void getMagnitude(cplx vals[], float r[], int n);
+void normalize(float in[], int n);
 
 static const float maxVoltage = 1.0;
 static const int maxFreq = 20000;
 static const int minFreq = 10;
+float old[8];
 
 /**
   * @brief  The application entry point.
@@ -82,24 +85,160 @@ int main(void)
     MX_CRC_Init();
     MX_DMA2D_Init();
     MX_FMC_Init();
-    //  MX_I2C3_Init();
+    MX_I2C3_Init();
     MX_LTDC_Init();
     MX_SPI5_Init();
     MX_TIM1_Init();
-    //  MX_USART1_UART_Init();
+    MX_USART1_UART_Init();
     initDisplay();
-    float a = M_PI;
 
     int numBins = 128;
-    float data[numBins];
+//    float data[numBins];
+    float r[128];
 
-    while (1){
-        for (int a = 0; a < numBins; a++)
-        {
-            data[a] = (rand() % 100) / 100.0;
-        }
-        updateGraph(data, numBins);
-    }
+//    cplx buf[] = {1, 1, 1, 1, 0, 0, 0, 0};
+//    cplx buf[] = {0.0,
+//    		0.479425538604203,
+//    		0.8414709848078965,
+//    		0.9974949866040544,
+//    		0.9092974268256817,
+//    		0.5984721441039564,
+//    		0.1411200080598672,
+//    		-0.35078322768961984};
+
+    cplx buf[] = {0.0,
+    		0.5144109570936778,
+    		0.9113543764606762,
+    		1.102101679335574,
+    		1.0483659583822245,
+    		0.7716549155821225,
+    		0.3479841527228045,
+    		-0.1107547624708039,
+    		-0.48420965569187285,
+    		-0.6730542437872358,
+    		-0.6233263976401964,
+    		-0.3396592653189305,
+    		0.11583423317759978,
+    		0.6387504721030441,
+    		1.1079389797851729,
+    		1.4151471087910727,
+    		1.4915075102530477,
+    		1.324383396221695,
+    		0.960447321980995,
+    		0.4942397328907523,
+    		0.04500857847615769,
+    		-0.27249950205585904,
+    		-0.37614505450769875,
+    		-0.23651741650606384,
+    		0.115854442176625,
+    		0.5979673361977097,
+    		1.0946577666186776,
+    		1.4867907770302824,
+    		1.6804221666867925,
+    		1.6297941492509942,
+    		1.3485343307799549,
+    		0.9063161168703447,
+    		0.41179820546398826,
+    		-0.013979822451379853,
+    		-0.26723212456282885,
+    		-0.28683584265640183,
+    		-0.06929390515693945,
+    		0.3304120236130974,
+    		0.8122872710441424,
+    		1.2558116702223094,
+    		1.549453449505605,
+    		1.617983452322162,
+    		1.4409021951902656,
+    		1.0574681566531445,
+    		0.5570961733833091,
+    		0.057476725361032044,
+    		-0.3242267556514665,
+    		-0.5000506810258052,
+    		-0.43275413562081694,
+    		-0.14492223837097162,
+    		0.2865787507749965,
+    		0.7494369561961632,
+    		1.1234094107546297,
+    		1.3097790220068348,
+    		1.2555418445681839,
+    		0.9664027260917271,
+    		0.5053974934170026,
+    		-0.022521031547015347,
+    		-0.4961593537631828,
+    		-0.8077355551902343,
+    		-0.8892476184509548,
+    		-0.7291019898945773,
+    		-0.3749311816197587,
+    		0.07808938253474279,
+    		0.5105647808423845,
+    		0.8081338293747545,
+    		0.8894898742069934,
+    		0.7263086199977965,
+    		0.3502039147012417,
+    		-0.15499158079098305,
+    		-0.6737309288788849,
+    		-1.0870224833120785,
+    		-1.3015431637495127,
+    		-1.272467541913695,
+    		-1.0144234319929448,
+    		-0.5978917227561031,
+    		-0.1319319449505179,
+    		0.262536996826027,
+    		0.48235907485530594,
+    		0.4674137688344181,
+    		0.21535141376379918,
+    		-0.21781650124991592,
+    		-0.7314166465497965,
+    		-1.2047487437282822,
+    		-1.5266245886051484,
+    		-1.6225790538796026,
+    		-1.4730908983532167,
+    		-1.1183523202747356,
+    		-0.6484195266172476,
+    		-0.18115582488181903,
+    		0.1666324421685541,
+    		0.3078001714595049,
+    		0.20620464510538417,
+    		-0.11444152271793573,
+    		-0.5763731575496465,
+    		-1.0668103014169559,
+    		-1.4655698875087597,
+    		-1.6744910137797961,
+    		-1.6414694815965047,
+    		-1.3732171028149651,
+    		-0.9336218459681257,
+    		-0.4281103063896429,
+    		0.02215889821396755,
+    		0.3099524636970262,
+    		0.36820933303637715,
+    		0.1864510815855036,
+    		-0.18666205937489666,
+    		-0.6552553208538244,
+    		-1.0997241901408072,
+    		-1.4060299556798894,
+    		-1.4936334012578936,
+    		-1.3352274743541426,
+    		-0.9634376485975369,
+    		-0.4628494613167867,
+    		0.05068487542947864,
+    		0.45839436725895366,
+    		0.6676511224949084,
+    		0.6346309102774774,
+    		0.37502434175797206,
+    		-0.0398237500579339,
+    		-0.5004014698414647,
+    		-0.8858620436770284,
+    		-1.0936315229988613,
+    		-1.0645429597128708,
+    		-0.7973432786214649,
+    		-0.3490210069978515,
+    		0.1791254306418517,
+    		0.6662679379170462};
+	fft(buf, 128);
+	getMagnitude(buf, r, 128);
+	normalize(r, 128);
+	updateGraph(r, 128);
+    while (1);
 }
 
 
@@ -167,7 +306,7 @@ void drawAxes()
         if (a != 10)
         {
             BSP_LCD_SetTextColor(LCD_COLOR_LIGHTGRAY);
-            BSP_LCD_DrawVLine(yAxisStart + a * interval, xAxisPos, xAxisLength - 3);
+            BSP_LCD_DrawVLine(yAxisStart + a * interval, xAxisPos + 1, xAxisLength - 3);
         }
 
         BSP_LCD_SetTextColor(LCD_COLOR_BLACK);
@@ -211,15 +350,30 @@ void drawAxes()
  */
 void updateGraph(float *bins, int numbins)
 {
-    clearLayers();
-    drawAxes();
+//	int same = 0;
+//	int i = 0;
+//	while((same == 0) && (i < numbins)){
+//		if (old[i] != bins[i])
+//			same = 1;
+//		i++;
+//	}
+//
+//	for (int a = 0; a < numbins; a++){
+//		old[a] = bins[a];
+//	}
+//
+//	if (same == 0){
+//		return;
+//	}
+
+	clearLayers();
+	drawAxes();
     BSP_LCD_SelectLayer(LCD_FOREGROUND_LAYER);
     BSP_LCD_SetTextColor(LCD_COLOR_RED);
     int endPosition = 210;          //the x position of the line that reperesents the x axis
     float linePositions[numbins];
     int xAxisYend = 295;
-    float binWidth = 285 / numbins;   //the "width" that each bin would occupy on the spectrum, in number of pixels
-    int numMissedPixels = 285 - binWidth * numbins;
+    float binWidth = 256 / numbins;   //the "width" that each bin would occupy on the spectrum, in number of pixels
 
     for (int a = 0; a < numbins; a++)
     { //determine the positions of the lines that will be drawn
@@ -231,11 +385,72 @@ void updateGraph(float *bins, int numbins)
     for (int a = 0; a < numbins; a++)
     {
         startPosition = endPosition - yAxisLength * bins[a];
-        BSP_LCD_DrawHLine(startPosition, linePositions[a], endPosition - startPosition);
-        // BSP_LCD_DrawRect(startPosition, linePositions[a] - (binWidth / 2), endPosition - startPosition, binWidth - 2);
-        HAL_Delay(1);
+        if (numbins < 64){
+        	BSP_LCD_DrawRect(startPosition, linePositions[a] - (binWidth / 2), endPosition - startPosition, binWidth - 2);
+        	HAL_Delay(10);
+        } else {
+            BSP_LCD_DrawHLine(startPosition, linePositions[a], endPosition - startPosition);
+        }
+//        HAL_Delay(1);
     }
     BSP_LCD_SelectLayer(LCD_BACKGROUND_LAYER);
+}
+
+/**
+ * @brief The function used to start of the recursive fft function
+ * @param buf The data samples used as input to the fft algorithm
+ * @param n The number of samples in the array
+ */
+void fft(cplx buf[], int n){
+    cplx out[n];
+    for (int a = 0; a < n; a++){
+        out[a] = buf[a];
+    }
+
+    fftRecurse(buf, out, n, 1);
+}
+
+/** 
+ * @brief The recursive part of the fft algorithm.
+ * @param buf The input values to the algorithm
+ * @param out The output array
+ * @param n The number of values in the input array 
+ * @param step The step size for the stage 
+ */
+void fftRecurse(cplx buf[], cplx out[], int n, int step)
+{
+    if (step < n)
+    {
+        fftRecurse(out, buf, n, step * 2);
+        fftRecurse(out + step, buf + step, n, step * 2);
+
+        for (int a = 0; a < n; a += 2 * step)
+        {
+            cplx t = cexp(-I * M_PI * a / n) * out[a + step];
+            buf[a / 2] = out[a] + t;
+            buf[(a + n) / 2] = out[a] - t;
+        }
+    }
+}
+
+void getMagnitude(cplx vals[], float r[], int n)
+{
+    for (int a = 0; a < n; a++){
+        r[a] = cabs(vals[a]);
+    }
+}
+
+void normalize(float in[], int n)
+{
+	float max = 0.0;
+	for (int a = 0; a < n; a++){
+		if (in[a] > max)
+			max = in[a];
+	}
+
+	for (int a = 0; a < n; a++){
+		in[a] = in[a] / max;
+	}
 }
 
 /**
